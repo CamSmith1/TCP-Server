@@ -1,0 +1,24 @@
+//Cameron - 22/04/21
+//Source https://websofttechs.com/tutorials/how-to-setup-python-script-autorun-in-ubuntu-18-04/
+This document outlines how to setup and configure the Linux Service for TcpServer.py
+
+On a new linux machine you will need to create the .service file (Note this file can be found within the Server directory)
+sudo vi /lib/systemd/system/TcpServer-py.service
+
+When the TcpServer-py.service file is open in Vim cope and paste the TcpServer.service info into that file and save
+
+In the directory home/ubuntu/ there should be a text file called SensorLogs.txt And the python script TcpServer.py
+
+Every time you make a modification to the TcpServer.py file you will need to reload the daemon with this command
+
+sudo systemctl daemon-reload
+
+The first time you setup the service file you will need to run this command
+
+sudo systemctl enable TcpServer-py.service
+
+
+After that you can now run any of the below commands to start, stop and get status
+sudo systemctl start TcpServer-py.service
+sudo systemctl status TcpServer-py.service
+sudo systemctl stop TcpServer-py.service

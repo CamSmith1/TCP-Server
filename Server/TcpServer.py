@@ -15,7 +15,7 @@ while True:
     while len(data):
         print("Sensor sent the data : {}".format(data))
 
-        file = open('SensorLogs.txt', 'a')
+        file = open('/home/ubuntu/SensorLogs.txt', 'a')
         file.write(format(data) + '\n')
         file.close()
         client.send(data.upper())
