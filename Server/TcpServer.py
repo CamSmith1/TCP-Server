@@ -1,4 +1,7 @@
 import socket
+import datetime
+import time
+
 # set sockets to point to TCP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Google says this line is important
@@ -9,18 +12,22 @@ sock.bind(("0.0.0.0", 6969))
 sock.listen(2)
 print ("Server has started listening")
 while True:
-    (client, (ip, port)) = sock.accept()
-    print('Sensor connected with ip as {} and port {}'.format(ip, port))
-    data = client.recv(2048)
-    while len(data):
-        print("Sensor sent the data : {}".format(data))
-
-        file = open('/home/ubuntu/SensorLogs.txt', 'a')
-        file.write(format(data) + '\n')
-        file.close()
-        client.send(data.upper())
+    try:
+        (client, (ip, port)) = sock.accept()
+        print('Sensor connected with ip as {} and port {}'.format(ip, port))
         data = client.recv(2048)
-    print("Sensor closed connection ")
-    client.close()
-
-
+        while len(data):
+            print("Sensor sent the data : {}".format(data))
+            file = open('/home/ubuntu/SensorLogs.txt', 'a')
+            file.write(format(data) + '\n')
+            file.close()
+            client.send(data.upper())
+            data = client.recv(2048)
+        print("Sensor closed connection ")
+        client.close()
+    except Exception as e:
+        print("Test", e)
+        ts = datetime.datetime.now().timestamp()
+        file = open('/home/ubuntu/serverErrorLog.txt', 'a')
+        file.write(e + " " + ts)
+        file.close()
