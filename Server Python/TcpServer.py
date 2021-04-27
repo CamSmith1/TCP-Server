@@ -1,9 +1,13 @@
+import json
 import socket
 from _thread import *
 import threading
-
+import requests
+import uuid
 print_lock = threading.Lock()
 # thread function
+
+
 def threaded(c):
     while True:
 
@@ -16,37 +20,60 @@ def threaded(c):
             print_lock.release()
             break
 
-        # start reading data
+        # convert data to utf-8 format then into a dataArray
         dataArr = data.decode('utf-8')
         dataArr = list(dataArr)
-        reportType = dataArr[6] + dataArr[7]
+        # Write data to DynamoDB (Only insert x2 report type)
+        uploadData(dataArr)
+        #   Write to log file
+        file = open('/home/ubuntu/SensorLogs.txt', 'a')
+        file.write(format(data) + '\n')
+        file.close()
 
-        # If the report type is 02 store all the data in DB
-        if reportType == "02":
-            packetSize = dataArr[8] + dataArr[9]
-            height = dataArr[10] + dataArr[11] + dataArr[12] + dataArr[13]
-            temperature = dataArr[14] + dataArr[15] + dataArr[16] + dataArr[17]
-            batteryVoltage = dataArr[26] + dataArr[27] + dataArr[28] + dataArr[29]
-            RSPR = dataArr[30] + dataArr[31] + dataArr[32] + dataArr[33] + dataArr[34] + dataArr[35] + dataArr[36] + dataArr[37]
-            FRAM = dataArr[38] + dataArr[39] + dataArr[40] + dataArr[41]
-            IMEI = dataArr[42] + dataArr[43] + dataArr[44] + dataArr[45] + dataArr[6] + dataArr[47] + dataArr[48] + dataArr[49] + dataArr[50] + dataArr[51] + dataArr[52] + dataArr[53] + dataArr[54] + dataArr[55] + dataArr[56] + dataArr[57]
 
-            print("packetSize " + packetSize)
-            print("Height " + height)
-            print("temperature " + temperature)
-            print("batteryVoltage " + batteryVoltage)
-            print("RSPR " + RSPR)
-            print("FRAM " + FRAM)
-            print("IMEI " + IMEI)
-            break
-        data = data[::-1]
+
         # send back reversed string to client
-        c.send(data)
-        #file = open('/home/ubuntu/SensorLogs.txt', 'a')
-        #file.write(format(data) + '\n')
-        #file.close()
-
+        # data = data[::-1]
+        #c.send(data)
+        #break
     c.close()
+
+
+def uploadData(dataArr):
+    reportType = dataArr[6] + dataArr[7]
+    print("Starting upload")
+    print(reportType)
+    if reportType == "02":
+        packetSize = dataArr[8] + dataArr[9]
+        height = dataArr[10] + dataArr[11] + dataArr[12] + dataArr[13]
+        temperature = dataArr[14] + dataArr[15] + dataArr[16] + dataArr[17]
+        batteryVoltage = dataArr[26] + dataArr[27] + dataArr[28] + dataArr[29]
+        RSPR = dataArr[30] + dataArr[31] + dataArr[32] + dataArr[33] + dataArr[34] + dataArr[35] + dataArr[36] + dataArr[37]
+        FRAM = dataArr[38] + dataArr[39] + dataArr[40] + dataArr[41]
+        IMEI = dataArr[42] + dataArr[43] + dataArr[44] + dataArr[45] + dataArr[6] + dataArr[47] + dataArr[48] + dataArr[49] + dataArr[50] + dataArr[51] + dataArr[52] + dataArr[53] + dataArr[54] + dataArr[55] + dataArr[56] + dataArr[57]
+
+        # Variable calculations
+        height = int(height, 16)    # (Hex to decimal)
+        temperature = int(temperature, 16)  # (Hex to decimal)
+        batteryVoltage = int(batteryVoltage, 16) * 10   # (Hex value x 10 = voltage)
+        transID = uuid.uuid4()
+        payload = {
+             "transactionID": str(transID),
+             "reportType": reportType,
+             "packetSize": packetSize,
+             "height": height,
+             "temperature": temperature,
+             "batteryVoltage": batteryVoltage,
+             "RSPR": RSPR,
+             "FRAM": FRAM,
+             "IMEI": IMEI
+        }
+        jsonStr = json.dumps(payload)
+        endpoint = "https://ksq19dmqh4.execute-api.us-east-1.amazonaws.com/InsertData"
+
+        req = requests.post(endpoint, data=jsonStr)
+        print(req.text)
+
 
 
 def main():
