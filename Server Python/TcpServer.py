@@ -33,9 +33,10 @@ def threaded(c):
 
 
         # send back reversed string to client
-        # data = data[::-1]
-        #c.send(data)
-        #break
+        data = data[::-1]
+        print_lock.release()
+        c.send(data)
+        break
     c.close()
 
 
@@ -51,7 +52,6 @@ def uploadData(dataArr):
         RSPR = dataArr[30] + dataArr[31] + dataArr[32] + dataArr[33] + dataArr[34] + dataArr[35] + dataArr[36] + dataArr[37]
         FRAM = dataArr[38] + dataArr[39] + dataArr[40] + dataArr[41]
         IMEI = dataArr[42] + dataArr[43] + dataArr[44] + dataArr[45] + dataArr[6] + dataArr[47] + dataArr[48] + dataArr[49] + dataArr[50] + dataArr[51] + dataArr[52] + dataArr[53] + dataArr[54] + dataArr[55] + dataArr[56] + dataArr[57]
-
         # Variable calculations
         height = int(height, 16)    # (Hex to decimal)
         temperature = int(temperature, 16)  # (Hex to decimal)
@@ -77,28 +77,32 @@ def uploadData(dataArr):
 
 
 def main():
-    # Set host IP to server's IP
-    host = ""
-
-    # point to port 6969
-    port = 6969
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((host, port))
-    # put the socket into listening mode
-    s.listen(5)
-    print("TCP Listener has started")
-
-    # a forever loop until client wants to exit
     while True:
-        # establish connection with client
-        c, addr = s.accept()
-        # lock acquired by client
-        print_lock.acquire()
-        print('Connected to :', addr[0], ':', addr[1])
+        # Set host IP to server's IP
+        host = ""
 
-        # Start a new thread and return its identifier
-        start_new_thread(threaded, (c,))
-    s.close()
+        # point to port 6969
+        port = 6969
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((host, port))
+        # put the socket into listening mode
+        # s.listen(5)
+
+        print("TCP Listener has started")
+
+        # a forever loop until client wants to exit
+        while True:
+            s.listen(20)
+            # establish connection with client
+            c, addr = s.accept()
+            # lock acquired by client
+            print_lock.acquire()
+            print('Connected to :', addr[0], ':', addr[1])
+
+            # Start a new thread and return its identifier
+            start_new_thread(threaded, (c,))
+        s.close()
+
 
 
 if __name__ == '__main__':
